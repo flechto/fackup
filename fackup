@@ -1,0 +1,61 @@
+#!/bin/bash
+
+while getopts c:d flag; do
+    case $flag in
+	c)
+	    CONFIG_FILE=$OPTARG;
+	    ;;
+	d)
+	    DRY=1
+	    ;;
+	?)
+	    exit;
+	    ;;
+    esac
+done
+
+if [ -f "/etc/fackup.conf" ]; then
+    echo Sourcing "/etc/fackup.conf"
+     . /etc/fackup.conf
+fi
+
+if [ -f ~/.fackup/fackup.conf ]; then
+    echo Sourcing "~/.fackup/fackup.conf"
+    . ~/.fackup/fackup.conf
+fi
+
+if [[ "$CONFIG_FILE" && -f $CONFIG_FILE ]]; then
+    echo Sourcing $CONFIG_FILE
+    . $CONFIG_FILE
+fi
+
+
+
+BACKUP_PATH="$ARCHIVE_BASE/$DEST"
+
+if [[ $DRY == 1 ]]; then
+    RSYNC_OPT="$RSYNC_OPT --dry-run"
+fi
+
+RSYNC="rsync $RSYNC_OPT $SRC/ $BACKUP_PATH"
+
+
+FORMAT="%-15s%s\n"
+printf $FORMAT "base:" "$ARCHIVE_BASE"
+printf $FORMAT "source:" "$SRC"
+printf $FORMAT "destination:" "$DEST"
+printf $FORMAT "backup path:" "$BACKUP_PATH"
+printf $FORMAT "rsync options:" "$RSYNC_OPT"
+printf "executing:\n%s\n" "$RSYNC"
+
+if [ ! -d "$BACKUP_PATH" ]; then
+    echo creating $BACKUP_PATH
+    mkdir -p $BACKUP_PATH
+fi
+
+$RSYNC
+
+echo Backup complete
+
+
+
